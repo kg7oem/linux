@@ -361,6 +361,34 @@ static void pty_stop(struct tty_struct *tty)
 	}
 }
 
+/* KG7OEM */
+static int pts_tiocmget(struct tty_struct *tty)
+{
+	int retval;
+
+	spin_lock_irq(&tty->ctrl_lock);
+	retval = tty->fake_mbits;
+	spin_unlock_irq(&tty->ctrl_lock);
+	return retval;
+}
+
+static int pts_tiocmset(struct tty_struct *tty, unsigned int set, unsigned int clear)
+{
+	struct tty_struct *master = tty->link;
+
+	spin_lock_irq(&tty->ctrl_lock);
+	tty->fake_mbits |= set;
+	tty->fake_mbits &= ~clear;
+	spin_unlock_irq(&tty->ctrl_lock);
+
+	if (master->packet) {
+		tty->ctrl_status |= TIOCPKT_MSET;
+		wake_up_interruptible(&master->read_wait);
+	}
+
+	return 0;
+}
+
 /**
  *	pty_common_install		-	set up the pty pair
  *	@driver: the pty driver
@@ -781,6 +809,9 @@ static const struct tty_operations pty_unix98_ops = {
 	.start = pty_start,
 	.stop = pty_stop,
 	.cleanup = pty_cleanup,
+	/* KG7OEM */
+	.tiocmget = pts_tiocmget,
+	.tiocmset = pts_tiocmset,
 };
 
 /**

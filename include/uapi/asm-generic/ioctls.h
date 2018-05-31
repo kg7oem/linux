@@ -113,6 +113,8 @@
 #define TIOCPKT_NOSTOP		16
 #define TIOCPKT_DOSTOP		32
 #define TIOCPKT_IOCTL		64
+/* KG7OEM */
+#define TIOCPKT_MSET		128
 
 #define TIOCSER_TEMT	0x01	/* Transmitter physically empty */
 
